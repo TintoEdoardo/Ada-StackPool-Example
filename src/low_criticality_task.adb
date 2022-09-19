@@ -9,14 +9,19 @@
 --  A simple example of a low criticality task implementation.
 
 pragma Warnings (Off);
+with Ada.Finalization;
 with Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 with System.Task_Primitives.Operations;
 with Stack_Pool;
+with Stack_Pool_Access; use Stack_Pool_Access;
 pragma Warnings (On);
 
 with Activation_Manager;
 with Ada.Real_Time;
 with Local_Objects;
+
+with Stack_Pool_Logger;
 
 package body Low_Criticality_Task is
 
@@ -28,11 +33,18 @@ package body Low_Criticality_Task is
         Ada.Real_Time.Microseconds(Period);
       Next_Time  : Ada.Real_Time.Time;
 
-      -- Local pool types and objects.
-      Local_Pool : Stack_Pool.Stack_Bounded_Pool (16, 8, 4);
-      type Object_Ptr is access Local_Objects.Local_Object;
-      for Object_Ptr'Storage_Pool use Local_Pool;
-      Pointer_to_Local_Object : constant Object_Ptr := new Local_Objects.Local_Object;
+      Test_1 : Boolean;
+      Test_2 : Boolean;
+
+      package I is new Stack_Pool_Access.Shared_Pointer
+        (Pool_Size => 24,
+         Elmt_Size => 8,
+         Alignment => 4,
+         Number_of_References => 3,
+         Element_Type => Local_Objects.Local_Object);
+
+      Ref_1 : I.Reference_Type;
+      Ref_2 : I.Reference_Type;
 
    begin
       Task_Primitive_Operations.Initialize_LO_Crit_Task
@@ -46,9 +58,32 @@ package body Low_Criticality_Task is
          Is_Migrable);
       Activation_Manager.Synchronize_Activation_Cyclic (Next_Time);
 
-      --  Print something from the object in the Local Pool.
-      Ada.Text_IO.Put_Line("<msg>" & "Task: " & Id'Image & " has an object with a field One. " & "</msg>");
-      Ada.Text_IO.Put_Line("<msg-content>" & "This is its value: " & Pointer_to_Local_Object.all.One'Image & " </msg-content>");
+      --  Generate debug messages.
+
+      I.Allocate (Ref_1);
+      I.Allocate (Ref_2);
+      Stack_Pool_Logger.Stapoo_Logger.Write_Message ("<msg>" & "Task: " & Id'Image & " - alloc R1" & "</msg>");
+      Stack_Pool_Logger.Stapoo_Logger.Write_Message ("<msg>" & "Task: " & Id'Image & " - alloc R2" & "</msg>");
+
+      Ref_1 := Ref_2;
+
+      Test_1 := (I.Is_Initialized (Ref_1));
+      Test_2 := (I.Is_Initialized (Ref_2));
+      Stack_Pool_Logger.Stapoo_Logger.Write_Message ("<msg>" & "Task: " & Id'Image & " - R1 is not null?" & Test_1'Image & "</msg>");
+      Stack_Pool_Logger.Stapoo_Logger.Write_Message ("<msg>" & "Task: " & Id'Image & " - R2 is not null?" & Test_2'Image & "</msg>");
+
+      Stack_Pool_Logger.Stapoo_Logger.Write_Message ("<msg>" & "Task: " & Id'Image & " - access R1" & Ref_1.Element.One'Image & "</msg>");
+
+      Stack_Pool_Logger.Stapoo_Logger.Write_Message ("<msg>" & "Task: " & Id'Image & " - Start Free" & "</msg>");
+      I.Free;
+      Stack_Pool_Logger.Stapoo_Logger.Write_Message ("<msg>" & "Task: " & Id'Image & " - Free ended" & "</msg>");
+
+      Test_1 := (I.Is_Initialized (Ref_1));
+      Test_2 := (I.Is_Initialized (Ref_2));
+      Stack_Pool_Logger.Stapoo_Logger.Write_Message ("<msg>" & "Task: " & Id'Image & " - R1 is not null?" & Test_1'Image & "</msg>");
+      Stack_Pool_Logger.Stapoo_Logger.Write_Message ("<msg>" & "Task: " & Id'Image & " - R2 is not null?" & Test_2'Image & "</msg>");
+
+      Stack_Pool_Logger.Stapoo_Logger.Write_Message ("<msg>" & "Task: " & Id'Image & " - access R1" & Ref_1.Element.One'Image & "</msg>");
 
       loop
 

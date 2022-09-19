@@ -18,11 +18,11 @@ package Activation_Manager is
    
    Experiment_Id       : Integer := 1;
    Approach            : String  := "SEMI2WF";
-   Taskset_Id          : Integer := 241;
-   Execution_Id        : String  := "e1_semi2wf_t241";
-   Taskset_Size        : String  := "12";
-   Taskset_Utilization : String  := "1.686";
-   Criticality_Factor  : String  := "2";
+   Taskset_Id          : Integer := 1;
+   Execution_Id        : String  := "stack-pool-test";
+   Taskset_Size        : String  := "4";
+   --  Taskset_Utilization : String  := "1.686";
+   --  Criticality_Factor  : String  := "2";
    HI_Crit_Proportion  : String  := "0.5";
    
    procedure Synchronize_Activation_Cyclic 

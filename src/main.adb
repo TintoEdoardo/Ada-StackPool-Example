@@ -5,7 +5,8 @@
 --                                  S p e c                                 --
 --                                                                          --
 ------------------------------------------------------------------------------
-
+pragma Restrictions (No_Dynamic_Sized_Objects);
+pragma Default_Storage_Pool (null);
 with System;
 with Taskset;
 pragma Unreferenced(Taskset);

@@ -5,7 +5,6 @@
 --                                  S p e c                                 --
 --                                                                          --
 ------------------------------------------------------------------------------
-
 with System;
 with System.Multiprocessors;  use System.Multiprocessors;
 
